@@ -294,25 +294,41 @@
             id.textContent = `ID: ${imageId}`;
             
             // 이미지 로드 (원본 해상도로 다운로드하기 위해 원본 URL 저장)
-            const imageUrl = `https://picsum.photos/id/${imageId}/${IMAGE_WIDTH}/${IMAGE_HEIGHT}`;
+            // 캐시 방지를 위해 타임스탬프 추가
+            const timestamp = new Date().getTime();
+            const imageUrl = `https://picsum.photos/id/${imageId}/${IMAGE_WIDTH}/${IMAGE_HEIGHT}?random=${timestamp}`;
             const originalImageUrl = `https://picsum.photos/id/${imageId}/1024/1024`;
-            img.src = imageUrl;
             img.dataset.originalUrl = originalImageUrl;
             img.dataset.imageId = imageId;
             
+            // 이미지 로딩 완료 처리
             img.onload = function() {
                 this.classList.add('loaded');
+                // 이미지 로딩 완료 이벤트 발생
+                const event = new CustomEvent('imageLoaded', { detail: { image: this } });
+                document.dispatchEvent(event);
             };
 
             img.onerror = function() {
                 // 오류 시 다른 이미지 시도
                 const fallbackId = Math.floor(Math.random() * 1000) + 1;
-                const fallbackUrl = `https://picsum.photos/id/${fallbackId}/${IMAGE_WIDTH}/${IMAGE_HEIGHT}`;
+                const fallbackTimestamp = new Date().getTime();
+                const fallbackUrl = `https://picsum.photos/id/${fallbackId}/${IMAGE_WIDTH}/${IMAGE_HEIGHT}?random=${fallbackTimestamp}`;
                 const fallbackOriginalUrl = `https://picsum.photos/id/${fallbackId}/1024/1024`;
                 this.src = fallbackUrl;
                 this.dataset.originalUrl = fallbackOriginalUrl;
                 this.dataset.imageId = fallbackId;
             };
+            
+            // 이미지 소스 설정 (이벤트 핸들러 설정 후)
+            img.src = imageUrl;
+            
+            // 이미 로드된 경우 (캐시된 이미지)
+            if (img.complete && img.naturalHeight !== 0) {
+                img.classList.add('loaded');
+                const event = new CustomEvent('imageLoaded', { detail: { image: img } });
+                document.dispatchEvent(event);
+            }
 
             // 다운로드 버튼 생성
             const downloadBtn = document.createElement('button');
@@ -367,432 +383,41 @@
             setTimeout(() => {
                 initGallery();
                 
-                // 모든 이미지가 로드될 때까지 대기
-                const images = document.querySelectorAll('.photo-image');
+                // 이미지 로딩 추적
                 let loadedCount = 0;
+                const totalImages = IMAGE_COUNT;
                 
-                images.forEach((img, index) => {
-                    if (img.complete) {
-                        loadedCount++;
-                    } else {
-                        img.onload = function() {
-                            loadedCount++;
-                            if (loadedCount === images.length) {
-                                setTimeout(() => {
-                                    loadingOverlay.classList.remove('active');
-                                }, 300);
-                            }
-                        };
+                // 이미지 로딩 완료 이벤트 리스너
+                const imageLoadHandler = function(event) {
+                    loadedCount++;
+                    if (loadedCount >= totalImages) {
+                        setTimeout(() => {
+                            loadingOverlay.classList.remove('active');
+                            document.removeEventListener('imageLoaded', imageLoadHandler);
+                        }, 300);
                     }
-                });
-
-                if (loadedCount === images.length) {
-                    setTimeout(() => {
-                        loadingOverlay.classList.remove('active');
-                    }, 500);
-                }
-            }, 300);
-        }
-
-        // 초기 갤러리 로드
-        window.addEventListener('DOMContentLoaded', () => {
-            initGallery();
-        });
-    </script>
-</body>
-</html><!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Picsum 사진 전시회</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Georgia', 'Times New Roman', serif;
-            background: #f5f5f3;
-            color: #2c2c2c;
-            line-height: 1.6;
-        }
-
-        .header {
-            background: #ffffff;
-            border-bottom: 3px solid #2c2c2c;
-            padding: 40px 20px;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .header h1 {
-            font-size: 3em;
-            font-weight: 300;
-            letter-spacing: 4px;
-            margin-bottom: 10px;
-            color: #2c2c2c;
-        }
-
-        .header p {
-            font-size: 1.1em;
-            color: #666;
-            font-style: italic;
-            margin-bottom: 20px;
-        }
-
-        .refresh-btn-container {
-            margin-top: 20px;
-        }
-
-        .refresh-btn {
-            background: #2c2c2c;
-            color: #ffffff;
-            border: 2px solid #2c2c2c;
-            padding: 12px 40px;
-            font-size: 14px;
-            font-weight: 500;
-            letter-spacing: 2px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            font-family: inherit;
-        }
-
-        .refresh-btn:hover {
-            background: #ffffff;
-            color: #2c2c2c;
-        }
-
-        .refresh-btn:active {
-            transform: scale(0.98);
-        }
-
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.95);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
-
-        .loading-overlay.active {
-            opacity: 1;
-            pointer-events: all;
-        }
-
-        .loading-text {
-            font-size: 1.5em;
-            color: #2c2c2c;
-            letter-spacing: 3px;
-        }
-
-        .gallery {
-            max-width: 1400px;
-            margin: 60px auto;
-            padding: 0 40px;
-        }
-
-        .gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 40px;
-            margin-top: 40px;
-        }
-
-        .photo-frame {
-            background: #ffffff;
-            padding: 20px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            cursor: pointer;
-            border: 1px solid #e0e0e0;
-        }
-
-        .photo-frame:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
-        }
-
-        .photo-image {
-            width: 100%;
-            height: 280px;
-            object-fit: cover;
-            display: block;
-            background: #f0f0f0;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-        }
-
-        .photo-image.loaded {
-            opacity: 1;
-        }
-
-        .photo-info {
-            margin-top: 15px;
-            text-align: center;
-            padding-top: 15px;
-            border-top: 1px solid #e0e0e0;
-        }
-
-        .photo-title {
-            font-size: 0.9em;
-            font-weight: 500;
-            color: #2c2c2c;
-            margin-bottom: 5px;
-            letter-spacing: 1px;
-        }
-
-        .photo-id {
-            font-size: 0.75em;
-            color: #888;
-            font-style: italic;
-            margin-bottom: 12px;
-        }
-
-        .download-btn {
-            background: #2c2c2c;
-            color: #ffffff;
-            border: 1px solid #2c2c2c;
-            padding: 8px 16px;
-            font-size: 0.75em;
-            letter-spacing: 1px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            font-family: inherit;
-            width: 100%;
-            margin-top: 10px;
-        }
-
-        .download-btn:hover {
-            background: #ffffff;
-            color: #2c2c2c;
-        }
-
-        .download-btn:active {
-            transform: scale(0.98);
-        }
-
-        .footer {
-            background: #2c2c2c;
-            color: #ffffff;
-            text-align: center;
-            padding: 30px 20px;
-            margin-top: 80px;
-        }
-
-        .footer p {
-            font-size: 0.9em;
-            letter-spacing: 1px;
-        }
-
-        @media (max-width: 768px) {
-            .header h1 {
-                font-size: 2em;
-            }
-
-            .gallery {
-                padding: 0 20px;
-            }
-
-            .gallery-grid {
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                gap: 25px;
-            }
-
-            .photo-image {
-                height: 200px;
-            }
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .photo-frame {
-            animation: fadeIn 0.6s ease forwards;
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>PICSUM PHOTOS</h1>
-        <p>디지털 사진 아카이브 전시회</p>
-        <div class="refresh-btn-container">
-            <button class="refresh-btn" onclick="refreshGallery()">🔄 전시 갱신</button>
-        </div>
-    </div>
-
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="loading-text">전시를 준비하는 중...</div>
-    </div>
-
-    <div class="gallery">
-        <div class="gallery-grid" id="galleryGrid">
-            <!-- 이미지들이 여기에 동적으로 추가됩니다 -->
-        </div>
-    </div>
-
-    <div class="footer">
-        <p>&copy; 2024 Picsum Photos Gallery | 모든 이미지는 Picsum Photos에서 제공됩니다</p>
-    </div>
-
-    <script>
-        const IMAGE_COUNT = 30;
-        const IMAGE_WIDTH = 400;
-        const IMAGE_HEIGHT = 400;
-
-        // 갤러리 초기화
-        function initGallery() {
-            const galleryGrid = document.getElementById('galleryGrid');
-            galleryGrid.innerHTML = '';
-            
-            for (let i = 0; i < IMAGE_COUNT; i++) {
-                createPhotoFrame(i);
-            }
-        }
-
-        // 개별 사진 프레임 생성
-        function createPhotoFrame(index) {
-            const galleryGrid = document.getElementById('galleryGrid');
-            const frame = document.createElement('div');
-            frame.className = 'photo-frame';
-            frame.style.animationDelay = `${index * 0.05}s`;
-
-            const img = document.createElement('img');
-            img.className = 'photo-image';
-            img.alt = `전시 작품 ${index + 1}`;
-            
-            const info = document.createElement('div');
-            info.className = 'photo-info';
-            
-            const title = document.createElement('div');
-            title.className = 'photo-title';
-            title.textContent = `작품 #${index + 1}`;
-            
-            const id = document.createElement('div');
-            id.className = 'photo-id';
-            
-            // 랜덤 이미지 ID 생성 (1-1000 사이)
-            const imageId = Math.floor(Math.random() * 1000) + 1;
-            id.textContent = `ID: ${imageId}`;
-            
-            // 이미지 로드 (원본 해상도로 다운로드하기 위해 원본 URL 저장)
-            const imageUrl = `https://picsum.photos/id/${imageId}/${IMAGE_WIDTH}/${IMAGE_HEIGHT}`;
-            const originalImageUrl = `https://picsum.photos/id/${imageId}/1024/1024`;
-            img.src = imageUrl;
-            img.dataset.originalUrl = originalImageUrl;
-            img.dataset.imageId = imageId;
-            
-            img.onload = function() {
-                this.classList.add('loaded');
-            };
-
-            img.onerror = function() {
-                // 오류 시 다른 이미지 시도
-                const fallbackId = Math.floor(Math.random() * 1000) + 1;
-                const fallbackUrl = `https://picsum.photos/id/${fallbackId}/${IMAGE_WIDTH}/${IMAGE_HEIGHT}`;
-                const fallbackOriginalUrl = `https://picsum.photos/id/${fallbackId}/1024/1024`;
-                this.src = fallbackUrl;
-                this.dataset.originalUrl = fallbackOriginalUrl;
-                this.dataset.imageId = fallbackId;
-            };
-
-            // 다운로드 버튼 생성
-            const downloadBtn = document.createElement('button');
-            downloadBtn.className = 'download-btn';
-            downloadBtn.textContent = '📥 다운로드';
-            downloadBtn.onclick = function(e) {
-                e.stopPropagation();
-                downloadImage(img.dataset.originalUrl || img.src, imageId);
-            };
-
-            info.appendChild(title);
-            info.appendChild(id);
-            info.appendChild(downloadBtn);
-            frame.appendChild(img);
-            frame.appendChild(info);
-            
-            galleryGrid.appendChild(frame);
-        }
-
-        // 이미지 다운로드 함수
-        function downloadImage(imageUrl, imageId) {
-            fetch(imageUrl)
-                .then(response => response.blob())
-                .then(blob => {
-                    const url = window.URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = `picsum-photo-${imageId}-${Date.now()}.jpg`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    window.URL.revokeObjectURL(url);
-                })
-                .catch(error => {
-                    console.error('다운로드 오류:', error);
-                    // 대체 방법: 직접 링크 사용
-                    const link = document.createElement('a');
-                    link.href = imageUrl;
-                    link.download = `picsum-photo-${imageId}-${Date.now()}.jpg`;
-                    link.target = '_blank';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                });
-        }
-
-        // 갤러리 전체 갱신
-        function refreshGallery() {
-            const loadingOverlay = document.getElementById('loadingOverlay');
-            loadingOverlay.classList.add('active');
-
-            setTimeout(() => {
-                initGallery();
+                };
                 
-                // 모든 이미지가 로드될 때까지 대기
-                const images = document.querySelectorAll('.photo-image');
-                let loadedCount = 0;
+                document.addEventListener('imageLoaded', imageLoadHandler);
                 
-                images.forEach((img, index) => {
-                    if (img.complete) {
-                        loadedCount++;
-                    } else {
-                        img.onload = function() {
-                            loadedCount++;
-                            if (loadedCount === images.length) {
-                                setTimeout(() => {
-                                    loadingOverlay.classList.remove('active');
-                                }, 300);
-                            }
-                        };
+                // 모든 이미지가 이미 로드된 경우 (빠른 네트워크)
+                setTimeout(() => {
+                    const images = document.querySelectorAll('.photo-image');
+                    let alreadyLoaded = 0;
+                    images.forEach(img => {
+                        if (img.classList.contains('loaded')) {
+                            alreadyLoaded++;
+                        }
+                    });
+                    
+                    // 이미 로드된 이미지 수가 전체와 같거나 일정 시간 후에는 로딩 오버레이 제거
+                    if (alreadyLoaded >= totalImages) {
+                        setTimeout(() => {
+                            loadingOverlay.classList.remove('active');
+                            document.removeEventListener('imageLoaded', imageLoadHandler);
+                        }, 300);
                     }
-                });
-
-                if (loadedCount === images.length) {
-                    setTimeout(() => {
-                        loadingOverlay.classList.remove('active');
-                    }, 500);
-                }
+                }, 100);
             }, 300);
         }
 
