@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>날씨 정보 - 3일 예보</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌤️ 날씨정보 | Weather Forecast</h1>
+            <p class="subtitle">전국 날씨 · 3일 예보 · 시간대별 상세정보</p>
+        </header>
+
+        <div class="search-section">
+            <div class="search-box">
+                <input type="text" id="locationInput" placeholder="지역명을 입력하세요 (예: Seoul, Busan)">
+                <button id="searchBtn">검색</button>
+            </div>
+            
+            <div class="quick-search">
+                <h3>빠른 검색</h3>
+                <div class="quick-buttons">
+                    <button class="quick-btn" data-location="Seoul">서울</button>
+                    <button class="quick-btn" data-location="Busan">부산</button>
+                    <button class="quick-btn" data-location="Incheon">인천</button>
+                    <button class="quick-btn" data-location="Jeju">제주</button>
+                </div>
+            </div>
+
+            <div class="golf-section">
+                <h3>⛳ 골프장 주변 날씨</h3>
+                <div class="golf-buttons">
+                    <button class="golf-btn" data-location="Yongin">용인 (용인CC 주변)</button>
+                    <button class="golf-btn" data-location="Icheon">이천 (이천CC 주변)</button>
+                    <button class="golf-btn" data-location="Yangju">양주 (양주CC 주변)</button>
+                    <button class="golf-btn" data-location="Pocheon">포천 (포천CC 주변)</button>
+                    <button class="golf-btn" data-location="Anseong">안성 (안성CC 주변)</button>
+                    <button class="golf-btn" data-location="Yeoju">여주 (여주CC 주변)</button>
+                    <button class="golf-btn" data-location="Gapyeong">가평 (가평CC 주변)</button>
+                    <button class="golf-btn" data-location="Cheonan">천안 (천안CC 주변)</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="loadingSpinner" class="loading hidden">
+            <div class="spinner"></div>
+            <p>날씨 정보를 불러오는 중...</p>
+        </div>
+
+        <div id="errorMessage" class="error-message hidden"></div>
+
+        <div id="weatherContainer" class="weather-container hidden">
+            <div class="location-info">
+                <h2 id="locationName"></h2>
+                <p id="locationDetails"></p>
+                <p id="localTime"></p>
+            </div>
+
+            <div class="forecast-cards" id="forecastCards">
+                <!-- 날씨 카드들이 여기에 동적으로 추가됩니다 -->
+            </div>
+
+            <div class="hourly-forecast-section">
+                <h3>시간대별 날씨</h3>
+                <div class="day-selector" id="daySelector">
+                    <!-- 날짜 선택 버튼이 동적으로 추가됩니다 -->
+                </div>
+                <div class="hourly-scroll" id="hourlyForecast">
+                    <!-- 시간대별 날씨가 여기에 동적으로 추가됩니다 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>Powered by <a href="https://www.weatherapi.com/" target="_blank">WeatherAPI.com</a></p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
