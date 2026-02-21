@@ -27,7 +27,7 @@ interface Memo {
     createdAt: number
 }
 
-const CATEGORIES = ["All", "Work", "Idea", "Personal", "Secret", "Other"]
+const CATEGORIES = ["전체", "업무", "아이디어", "개인", "비밀", "기타"]
 const COLORS = [
     "bg-yellow-100 dark:bg-yellow-900/30 border-yellow-200 dark:border-yellow-800",
     "bg-blue-100 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800",
@@ -41,11 +41,11 @@ export default function MemoPage() {
     const [memos, setMemos] = React.useState<Memo[]>([])
     const [isLoaded, setIsLoaded] = React.useState(false)
     const [searchQuery, setSearchQuery] = React.useState("")
-    const [selectedCategory, setSelectedCategory] = React.useState("All")
+    const [selectedCategory, setSelectedCategory] = React.useState("전체")
 
     const [newTitle, setNewTitle] = React.useState("")
     const [newContent, setNewContent] = React.useState("")
-    const [newCategory, setNewCategory] = React.useState("Other")
+    const [newCategory, setNewCategory] = React.useState("기타")
 
     // Load from localStorage
     React.useEffect(() => {
@@ -74,7 +74,7 @@ export default function MemoPage() {
         const randomColor = COLORS[Math.floor(Math.random() * COLORS.length)]
         const memo: Memo = {
             id: crypto.randomUUID(),
-            title: newTitle.trim() || "Untitled",
+            title: newTitle.trim() || "제목 없음",
             content: newContent,
             category: newCategory,
             color: randomColor,
@@ -84,7 +84,7 @@ export default function MemoPage() {
         setMemos([memo, ...memos])
         setNewTitle("")
         setNewContent("")
-        setNewCategory("Other")
+        setNewCategory("기타")
     }
 
     const deleteMemo = (id: string) => {
@@ -95,7 +95,7 @@ export default function MemoPage() {
         const matchesSearch =
             m.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
             m.content.toLowerCase().includes(searchQuery.toLowerCase())
-        const matchesCategory = selectedCategory === "All" || m.category === selectedCategory
+        const matchesCategory = selectedCategory === "전체" || m.category === selectedCategory
         return matchesSearch && matchesCategory
     })
 
@@ -126,11 +126,11 @@ export default function MemoPage() {
                     </div>
 
                     <div className="space-y-2">
-                        <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">
-                            Memory Box
+                        <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl font-nanum">
+                            나의 메모 상자
                         </h1>
                         <p className="text-muted-foreground text-lg max-w-md mx-auto">
-                            Capture your thoughts, ideas, and tasks in one beautiful place.
+                            당신의 생각, 아이디어, 할 일들을 한 곳에 아름답게 기록하세요.
                         </p>
                     </div>
                 </div>
@@ -138,18 +138,18 @@ export default function MemoPage() {
                 {/* Input Form */}
                 <Card className="mb-12 border-muted/40 shadow-xl backdrop-blur-sm bg-card/50">
                     <CardHeader>
-                        <CardTitle>Create New Memo</CardTitle>
+                        <CardTitle>새 메모 작성</CardTitle>
                     </CardHeader>
                     <form onSubmit={addMemo}>
                         <CardContent className="space-y-4">
                             <Input
-                                placeholder="Title (optional)"
+                                placeholder="제목 (선택 사항)"
                                 value={newTitle}
                                 onChange={(e) => setNewTitle(e.target.value)}
                                 className="bg-background/50"
                             />
                             <Textarea
-                                placeholder="What's on your mind?"
+                                placeholder="무슨 생각을 하고 계신가요?"
                                 value={newContent}
                                 onChange={(e) => setNewContent(e.target.value)}
                                 className="min-h-[120px] bg-background/50 resize-none"
@@ -169,11 +169,11 @@ export default function MemoPage() {
                         </CardContent>
                         <CardFooter className="flex justify-between items-center">
                             <p className="text-xs text-muted-foreground italic">
-                                Press + or click Create to save
+                                + 버튼이나 작성을 클릭하여 저장하세요
                             </p>
                             <Button type="submit" size="sm" className="gap-2">
                                 <Plus className="h-4 w-4" />
-                                Create Memo
+                                메모 작성
                             </Button>
                         </CardFooter>
                     </form>
@@ -184,7 +184,7 @@ export default function MemoPage() {
                     <div className="relative flex-grow group">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
                         <Input
-                            placeholder="Search memos..."
+                            placeholder="메모 검색하기..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="pl-10 h-11 bg-card/30 backdrop-blur-sm border-muted/30 rounded-xl"
@@ -242,7 +242,7 @@ export default function MemoPage() {
                                                     onClick={() => deleteMemo(memo.id)}
                                                 >
                                                     <Trash2 className="h-4 w-4 mr-2" />
-                                                    Delete
+                                                    삭제
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
@@ -256,7 +256,7 @@ export default function MemoPage() {
                                 </CardContent>
                                 <CardFooter className="px-6 py-4 bg-background/20 border-t border-muted/10 items-center justify-between">
                                     <span className="text-[10px] text-muted-foreground uppercase font-medium">
-                                        {format(memo.createdAt, "MMM d, yyyy")}
+                                        {format(memo.createdAt, "yyyy년 MM월 dd일")}
                                     </span>
                                 </CardFooter>
                             </Card>
@@ -267,10 +267,10 @@ export default function MemoPage() {
                                 <StickyNote className="h-10 w-10 text-muted-foreground/40" />
                             </div>
                             <h3 className="text-xl font-semibold text-muted-foreground">
-                                {searchQuery ? "No results found" : "No memos yet"}
+                                {searchQuery ? "검색 결과가 없습니다" : "메모가 아직 없습니다"}
                             </h3>
                             <p className="text-muted-foreground mt-2">
-                                {searchQuery ? "Try a different search term" : "Start your journey by adding a memo above!"}
+                                {searchQuery ? "다른 검색어를 입력해 보세요" : "위에서 첫 번째 메모를 추가해 보세요!"}
                             </p>
                         </div>
                     )}

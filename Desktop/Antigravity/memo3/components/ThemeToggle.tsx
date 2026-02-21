@@ -29,7 +29,7 @@ export function ThemeToggle() {
             size="icon"
             className="h-9 w-9 transition-all hover:bg-accent"
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            aria-label="Toggle theme"
+            aria-label="테마 전환"
         >
             {theme === "dark" ? (
                 <Sun className="h-4 w-4 transition-all" />
